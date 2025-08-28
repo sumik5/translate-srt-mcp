@@ -17,10 +17,8 @@ sys.path.insert(0, str(project_root))
 from fastmcp import FastMCP
 
 # モジュールインポート
-from modules.srt_parser import SRTParser, Subtitle
+from modules.srt_parser import SRTParser
 from modules.translator import Translator
-from modules.config_handler import TranslationConfig
-from modules.error_handler import ErrorHandler, SRTTranslationError
 
 # ログ設定
 logging.basicConfig(
@@ -86,20 +84,16 @@ async def translate_srt(
         subtitles = await srt_parser.parse_file(input_path)
         logger.info(f"Found {len(subtitles)} subtitle entries")
         
-        # 2. 翻訳設定作成
-        logger.info("Creating translation configuration...")
-        config = TranslationConfig(
+        # 2. 翻訳実行
+        logger.info("Starting translation process...")
+        translator = Translator(
             lm_studio_url=lm_studio_url,
             model_name=model_name
         )
-        
-        # 3. 翻訳実行
-        logger.info("Starting translation process...")
-        translator = Translator(config)
         translated_subtitles = await translator.translate_subtitles(subtitles)
         logger.info("Translation completed")
         
-        # 4. SRT形式のデータを生成して返す
+        # 3. SRT形式のデータを生成して返す
         logger.info("Generating SRT format data...")
         srt_data = srt_parser.generate_srt_string(translated_subtitles)
         
