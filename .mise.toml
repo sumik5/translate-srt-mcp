@@ -1,0 +1,73 @@
+[env]
+UV_CACHE_DIR = ".uv-cache"
+ENVIRONMENT = "development"
+
+[tools]
+python = "3.13"
+uv = "latest"
+
+# =========================================
+# Project Setup
+# =========================================
+
+[tasks.install]
+description = "Install production dependencies"
+run = "uv sync --no-dev"
+
+[tasks.install-dev]
+description = "Install all dependencies including development tools"
+run = "uv sync --all-extras"
+
+[tasks.setup-dev]
+description = "Complete development environment setup"
+depends = ["install-dev"]
+run = """
+uv run pre-commit install
+echo "✅ Development environment ready!"
+echo "Run 'mise run dev' to start the development server"
+"""
+
+# =========================================
+# Cleaning
+# =========================================
+
+[tasks.clean]
+description = "Clean up build artifacts and cache"
+run = """
+rm -rf build/ dist/ *.egg-info/ htmlcov/ .coverage .pytest_cache/ .mypy_cache/ .ruff_cache/
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -name "*.pyc" -delete 2>/dev/null || true
+find . -name "*.pyo" -delete 2>/dev/null || true
+"""
+
+# =========================================
+# Testing
+# =========================================
+
+[tasks.test]
+description = "Run tests with pytest"
+run = "uv run pytest tests/ -v"
+
+[tasks.test-cov]
+description = "Run tests with coverage report"
+run = "uv run pytest tests/ --cov=modules --cov-report=html --cov-report=term-missing -v"
+
+[tasks.test-watch]
+description = "Run tests in watch mode"
+run = "uv run pytest tests/ -f -v"
+
+# =========================================
+# Server Management
+# =========================================
+
+[tasks.server]
+description = "Start the translate-srt MCP server"
+run = "uv run python -m translate_srt_mcp"
+
+[tasks.dev]
+description = "Start development server with logging"
+run = "uv run python -m translate_srt_mcp"
+
+[tasks.inspector]
+description = "Start MCP Inspector"
+run = "npx @modelcontextprotocol/inspector"

@@ -1,0 +1,19 @@
+1
+00:00:01,000 --> 00:00:04,000
+Hello, world!
+This is a test subtitle.
+
+2
+00:00:05,500 --> 00:00:08,000
+Welcome to SRT parsing.
+
+3
+00:00:10,000 --> 00:00:13,500
+Multiple lines
+are supported
+in subtitles.
+
+4
+00:00:15,000 --> 00:00:18,000
+日本語のテストです。
+漢字、ひらがな、カタカナが含まれます。
