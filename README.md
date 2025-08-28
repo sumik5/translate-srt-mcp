@@ -1,12 +1,115 @@
-# Translate SRT MCP Server
+# translate-srt-mcp
 
-SRT字幕ファイルを日本語に翻訳するMCPサーバーです。LM Studio などのローカルLLMサーバーと連携して、英語字幕を自然な日本語に翻訳します。
+SRT字幕ファイルを日本語に翻訳するMCPサーバー。LM Studioの翻訳モデルを使用して高品質な字幕翻訳を提供します。
 
-## 特徴
+## 主な機能
 
-- 📝 SRT形式の字幕ファイルを解析・翻訳
-- 🤖 LM Studio（OpenAI互換API）と連携
-- 📤 翻訳結果はSRT形式のテキストデータとして返却
+- **SRT形式の完全サポート**: タイムスタンプを保持したまま翻訳
+- **チャンクベース処理**: 大きなファイルも効率的に処理
+- **LM Studio統合**: ローカルLLMを使用した高品質な翻訳
+- **エラーハンドリング**: 翻訳失敗時の自動リトライと詳細なエラー報告
+- **統計情報**: 翻訳履歴と使用状況の追跡
+- **分析ツール**: SRTファイルの検証と詳細分析
+- **接続診断**: LM Studioの状態確認機能
+
+## 利用可能なツール
+
+### 1. translate_srt
+字幕を日本語に翻訳します。
+
+```python
+# 基本的な使用法
+translated = mcp__translate-srt__translate_srt(
+    srt_content=content
+)
+
+# カスタム設定
+translated = mcp__translate-srt__translate_srt(
+    srt_content=content,
+    model_name="llama-3.2-3b",
+    chunk_size=500,
+    preserve_formatting=True
+)
+```
+
+### 2. analyze_srt
+SRTファイルの統計情報を分析します。
+
+```python
+stats = mcp__translate-srt__analyze_srt(
+    srt_content=content,
+    detailed=True  # 詳細な分析を含む
+)
+```
+
+### 3. check_lm_studio_status
+LM Studioの接続状態を確認します。
+
+```python
+status = mcp__translate-srt__check_lm_studio_status(
+    lm_studio_url="http://localhost:1234",
+    model_name="llama-3.2-3b"
+)
+```
+
+### 4. preview_srt
+字幕のプレビューを生成します。
+
+```python
+preview = mcp__translate-srt__preview_srt(
+    srt_content=content,
+    num_entries=5,
+    show_start=True,
+    show_end=True
+)
+```
+
+### 5. get_server_info
+サーバー情報と統計を取得します。
+
+```python
+info = mcp__translate-srt__get_server_info()
+```
+
+## 使用例
+
+### MCPクライアントでの実際の使用手順
+
+```python
+# 1. LM Studioの状態を確認
+status = await check_lm_studio_status()
+if not status["api_reachable"]:
+    print("LM Studioが起動していません")
+    
+# 2. SRTファイルを読み込み
+srt_content = read_file("movie.srt")
+
+# 3. 分析して内容を確認
+analysis = await analyze_srt(srt_content, detailed=True)
+print(f"字幕数: {analysis['subtitle_count']}")
+print(f"総時間: {analysis['duration_formatted']}")
+
+# 4. プレビュー表示
+preview = await preview_srt(srt_content, num_entries=3)
+print("最初の3つの字幕:")
+for entry in preview["preview_entries"]["start"]:
+    print(f"{entry['time']}: {entry['text']}")
+
+# 5. 翻訳実行
+translated = await translate_srt(
+    srt_content=srt_content,
+    model_name="llama-3.2-3b-instruct",
+    chunk_size=1000
+)
+
+# 6. 結果を保存
+write_file("movie_ja.srt", translated)
+
+# 7. 統計情報を確認
+info = await get_server_info()
+print(f"翻訳回数: {info['statistics']['total_translations']}")
+print(f"処理文字数: {info['statistics']['total_characters']}")
+```
 
 ## 必要要件
 
@@ -44,107 +147,94 @@ uv sync
 pip install -r requirements.txt
 ```
 
-## 使用方法
+## 環境変数
 
-### 1. LM Studio の準備
+```bash
+# LM StudioのAPI URL (デフォルト: http://localhost:1234/v1)
+export LM_STUDIO_URL="http://localhost:1234"
 
-1. [LM Studio](https://lmstudio.ai/) をインストール
-2. 翻訳用のモデルをダウンロード（例：Llama 3, Command-R+ など）
-3. LM Studio のサーバーを起動（デフォルト: `http://localhost:1234/v1`）
+# 使用する翻訳モデル名 (必須)
+export LM_MODEL_NAME="llama-3.2-3b-instruct"
 
-### 2. MCP クライアント設定
+# デフォルトのチャンクサイズ (デフォルト: 1000)
+export CHUNK_SIZE="1000"
+```
 
-MCPクライアント（Claude Desktop、Continue など）の設定ファイルに以下を追加します。
-LM StudioのURLとモデル名は環境変数として設定します。
+## Claude Codeでの設定例
 
-#### 推奨: uvx を使用（最も簡単）
-
-GitHubリポジトリから直接起動（インストール不要）:
+To use this server with the Claude Desktop app, add the following configuration to the "MCP Servers" section of your Claude settings:
 
 ```json
-{
-  "mcpServers": {
-    "translate-srt": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/sumik5/translate-srt-mcp",
-        "translate-srt-mcp"
-      ],
-      "env": {
-        "LM_STUDIO_URL": "http://localhost:1234",
-        "LM_MODEL_NAME": "grapevine-AI/plamo-2-translate-gguf",
-        "CHUNK_SIZE": "1000"
-      }
+"mcpServers": {
+  "translate-srt": {
+    "command": "uv",
+    "args": [
+      "--directory",
+      "/path/to/translate-srt-mcp",
+      "run",
+      "translate-srt-mcp"
+    ],
+    "env": {
+      "LM_STUDIO_URL": "http://localhost:1234",
+      "LM_MODEL_NAME": "llama-3.2-3b-instruct",
+      "CHUNK_SIZE": "1000"
     }
   }
 }
 ```
 
-#### ローカルインストール版を使用する場合
+## MCPクライアントでの使用時のベストプラクティス
 
-##### Claude Desktop の場合 (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS)
+1. **使用前の準備**
+   - LM Studioを起動し、適切なモデルをロード
+   - `check_lm_studio_status`で接続確認
 
-```json
-{
-  "mcpServers": {
-    "translate-srt": {
-      "command": "uv",
-      "args": [
-        "run",
-        "python",
-        "/path/to/translate-srt-mcp/server.py"
-      ],
-      "env": {
-        "LM_STUDIO_URL": "http://localhost:1234/v1",
-        "LM_MODEL_NAME": "llama-3-8b-instruct"
-      }
-    }
-  }
-}
+2. **大きなファイルの処理**
+   - `analyze_srt`で事前にファイルサイズを確認
+   - 適切な`chunk_size`を設定（500-2000を推奨）
+
+3. **エラー対処**
+   - 接続エラー: LM Studioの起動状態を確認
+   - モデルエラー: 正しいモデル名を指定
+   - 翻訳エラー: チャンクサイズを調整
+
+4. **品質向上のヒント**
+   - 専門用語が多い場合は小さいチャンクサイズを使用
+   - `preserve_formatting=True`で元の改行を保持
+   - 翻訳後に`preview_srt`で結果を確認
+
+## Development
+
+Install dependencies:
+```bash
+uv install
 ```
 
-#### 環境変数の説明
-
-| 環境変数 | 説明 | デフォルト値 | 例 |
-|---------|------|-------------|-----|
-| `LM_STUDIO_URL` | LM StudioのAPI エンドポイントURL | `http://localhost:1234/v1` | `http://localhost:1234/v1` |
-| `LM_MODEL_NAME` | 使用する翻訳モデルの名前（必須） | なし | `llama-3-8b-instruct`, `plamo-2-translate` など |
-| `CHUNK_SIZE` | 一度に送信する最大文字数 | `1000` | `500`, `2000` など |
-
-**注意事項：**
-- `LM_MODEL_NAME` は必須です。設定されていない場合、エラーになります
-- `CHUNK_SIZE` はSRT字幕ブロックを分割しないように設計されています（字幕の途中で切れることはありません）
-- トークン数が多いモデルの場合は`CHUNK_SIZE`を大きく、少ないモデルの場合は小さく設定してください
-- モデル名は LM Studio で実際に読み込んでいるモデルの名前と一致させてください
+For development with auto-reloading:
+```bash
+uv run fastmcp dev translate_srt_mcp.main:mcp
+```
 
 ## トラブルシューティング
 
-### LM Studio に接続できない場合
+### LM Studioに接続できない
+```python
+# 接続状態を確認
+status = await check_lm_studio_status()
+print(status["recommendation"])
+```
 
-1. LM Studio サーバーが起動しているか確認
-2. URL が正しいか確認（デフォルト: `http://localhost:1234/v1`）
-3. ファイアウォールの設定を確認
+### モデルが見つからない
+```python
+# 利用可能なモデルを確認
+status = await check_lm_studio_status()
+print("利用可能なモデル:", status["available_models"])
+```
 
-### 翻訳が遅い場合
-
-1. より高速なモデルを使用
-2. LM Studio の設定でコンテキスト長を調整
-3. バッチサイズを調整（`modules/translator.py`）
-
-### 文字化けする場合
-
-1. SRTファイルのエンコーディングを確認（UTF-8推奨）
-2. 出力先のアプリケーションがUTF-8に対応しているか確認
+### 翻訳が途中で止まる
+- チャンクサイズを小さくする（例: 500）
+- タイムアウト時間を増やす（translator.pyで設定）
 
 ## ライセンス
 
 MIT License
-
-## 貢献
-
-プルリクエストを歓迎します。大きな変更の場合は、まずissueを開いて変更内容を議論してください。
-
-## サポート
-
-問題が発生した場合は、GitHubのIssueページで報告してください。
