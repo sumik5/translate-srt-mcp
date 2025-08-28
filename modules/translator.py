@@ -127,21 +127,7 @@ class Translator:
     
     def _build_bulk_translation_prompt(self, srt_text: str) -> str:
         """一括翻訳用のプロンプトを構築."""
-        prompt = f"""これはSRT形式の字幕データです。英語から日本語に翻訳し、同じSRT形式で返してください。
-
-重要な注意点:
-1. 必ず元のSRT形式を維持してください（番号、タイムコード、空行を含む）
-2. 字幕は時間を跨いで一つの文章となる場合があります。文脈を考慮して自然な日本語にしてください
-3. 字幕として読みやすい長さと表現を心がけてください
-4. タイムコード（00:00:00,000 --> 00:00:00,000）は変更しないでください
-5. 各字幕ブロック間の空行を維持してください
-
-入力SRTデータ:
-{srt_text}
-
-翻訳後のSRTデータ:"""
-        
-        return prompt
+        return srt_text
     
     def _parse_translated_srt(self, translated_text: str, original_subtitles: List[Subtitle]) -> List[Subtitle]:
         """

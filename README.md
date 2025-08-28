@@ -73,7 +73,8 @@ GitHubリポジトリから直接起動（インストール不要）:
       ],
       "env": {
         "LM_STUDIO_URL": "http://localhost:1234",
-        "LM_MODEL_NAME": "grapevine-AI/plamo-2-translate-gguf"
+        "LM_MODEL_NAME": "grapevine-AI/plamo-2-translate-gguf",
+        "CHUNK_SIZE": "1000"
       }
     }
   }
@@ -105,14 +106,16 @@ GitHubリポジトリから直接起動（インストール不要）:
 
 #### 環境変数の説明
 
-| 環境変数 | 説明 | 例 |
-|---------|------|-----|
-| `LM_STUDIO_URL` | LM StudioのAPI エンドポイントURL | `http://localhost:1234/v1` |
-| `LM_MODEL_NAME` | 使用する翻訳モデルの名前（LM Studioで読み込んだモデル） | `llama-3-8b-instruct`, `command-r-plus` など |
+| 環境変数 | 説明 | デフォルト値 | 例 |
+|---------|------|-------------|-----|
+| `LM_STUDIO_URL` | LM StudioのAPI エンドポイントURL | `http://localhost:1234/v1` | `http://localhost:1234/v1` |
+| `LM_MODEL_NAME` | 使用する翻訳モデルの名前（必須） | なし | `llama-3-8b-instruct`, `plamo-2-translate` など |
+| `CHUNK_SIZE` | 一度に送信する最大文字数 | `1000` | `500`, `2000` など |
 
 **注意事項：**
 - `LM_MODEL_NAME` は必須です。設定されていない場合、エラーになります
-- `LM_STUDIO_URL` を省略すると、デフォルトで `http://localhost:1234/v1` が使用されます
+- `CHUNK_SIZE` はSRT字幕ブロックを分割しないように設計されています（字幕の途中で切れることはありません）
+- トークン数が多いモデルの場合は`CHUNK_SIZE`を大きく、少ないモデルの場合は小さく設定してください
 - モデル名は LM Studio で実際に読み込んでいるモデルの名前と一致させてください
 
 ## トラブルシューティング
