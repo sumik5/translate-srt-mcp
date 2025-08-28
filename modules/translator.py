@@ -52,7 +52,7 @@ class Translator:
         """
         self.base_url = lm_studio_url.rstrip('/')
         # /v1が含まれていない場合は追加
-        if not self.base_url.endswith('/v1'):
+        if '/v1' not in self.base_url:
             self.base_url = self.base_url + '/v1'
         
         self.model = model_name
@@ -229,9 +229,12 @@ class Translator:
                 temperature=0.3
             )
             
-            api_url = urljoin(self.base_url, "/chat/completions")
+            # URLが既に/v1を含む場合は、/chat/completionsのみ追加
+            if self.base_url.endswith('/v1'):
+                api_url = f"{self.base_url}/chat/completions"
+            else:
+                api_url = urljoin(self.base_url, "chat/completions")
             
-            logger.info(f"Sending request to {api_url}")
             response = await self.client.post(
                 api_url,
                 json=request_data.model_dump(),
@@ -241,6 +244,10 @@ class Translator:
             response.raise_for_status()
             
             result = response.json()
+            
+            if "error" in result:
+                error_msg = result.get("error", {}).get("message", str(result["error"]))
+                raise LMStudioAPIError(f"API Error: {error_msg}")
             
             if "choices" not in result or not result["choices"]:
                 raise LMStudioAPIError("APIレスポンスにchoicesが含まれていません")
